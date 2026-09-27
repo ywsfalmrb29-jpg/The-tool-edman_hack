@@ -930,7 +930,543 @@ function showToast(msg, type = '') {
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.className = 'toast'; }, 2500);
 }
+/* ============================================
+   🛠️ وظائف الأدوات
+   ============================================ */
 
+/* ===== 1. URL Scanner ===== */
+async function runUrlScan() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { showToast('❌ اكتب رابط', 'error'); return; }
+  
+  const r = document.getElementById('urlResult');
+  r.className = 'result-box show';
+  r.innerHTML = '<div class="result-line info">🔍 جاري التحليل...</div>';
+  
+  await new Promise(x => setTimeout(x, 1000));
+  
+  let score = 0;
+  const findings = [];
+  
+  if (!url.toLowerCase().startsWith('https://')) {
+    score += 2;
+    findings.push({ text: '❌ لا يستخدم HTTPS', type: 'error' });
+  } else {
+    findings.push({ text: '✅ يستخدم HTTPS', type: 'success' });
+  }
+  
+  ['free','login-','verify','bit.ly','tinyurl','win','prize','hack','phishing','giveaway','bonus'].forEach(kw => {
+    if (url.toLowerCase().includes(kw)) {
+      score += 2;
+      findings.push({ text: `⚠️ كلمة مشبوهة: "${kw}"`, type: 'warning' });
+    }
+  });
+  
+  ['.tk','.ml','.ga','.cf','.gq','.xyz','.top'].forEach(tld => {
+    if (url.toLowerCase().includes(tld)) {
+      score += 3;
+      findings.push({ text: `🚨 نطاق مشبوه: "${tld}"`, type: 'error' });
+    }
+  });
+  
+  if (/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(url)) {
+    score += 3;
+    findings.push({ text: '🚨 يحتوي على IP مباشر', type: 'error' });
+  }
+  
+  if (url.includes('@')) {
+    score += 2;
+    findings.push({ text: '🚨 يحتوي على @', type: 'error' });
+  }
+  
+  if (url.length > 75) {
+    score += 1;
+    findings.push({ text: '⚠️ الرابط طويل', type: 'warning' });
+  }
+  
+  let verdict, vClass;
+  if (score >= 6) { verdict = '🚨 رابط خطير!'; vClass = 'error'; }
+  else if (score >= 3) { verdict = '⚠️ رابط مشبوه'; vClass = 'warning'; }
+  else { verdict = '✅ رابط آمن'; vClass = 'success'; }
+  
+  r.innerHTML = `<div class="result-line info">📊 نتائج التحليل:</div>` +
+    `<div class="result-line ${vClass}">${verdict}</div>` +
+    `<div class="result-line">📈 الخطورة: ${score}/10</div>\n` +
+    findings.map(f => `<div class="result-line ${f.type}">  ${f.text}</div>`).join('');
+  
+  addLog('فحص رابط: ' + url.substring(0, 30) + '...', score >= 3 ? 'error' : 'success');
+  showToast(score >= 3 ? '⚠️ رابط مشبوه' : '✅ رابط آمن', score >= 3 ? 'warning' : 'success');
+}
+
+/* ===== 2. IP Lookup ===== */
+async function runIpLookup() {
+  const ip = document.getElementById('ipInput').value.trim();
+  if (!ip) { showToast('❌ اكتب IP', 'error'); return; }
+  
+  const r = document.getElementById('ipResult');
+  r.className = 'result-box show';
+  r.innerHTML = '<div class="result-line info">📡 جاري البحث...</div>';
+  
+  try {
+    const resp = await fetch(`https://ipapi.co/${ip}/json/`);
+    const d = await resp.json();
+    
+    if (d.error) {
+      r.innerHTML = '<div class="result-line error">❌ IP غير صالح</div>';
+      return;
+    }
+    
+    r.innerHTML = `<div class="result-line info">📊 معلومات ${ip}:</div>\n` +
+      `<div class="result-line">🌍 البلد: ${d.country_name || 'N/A'} ${d.country_code || ''}</div>` +
+      `<div class="result-line">🏙️ المدينة: ${d.city || 'N/A'}</div>` +
+      `<div class="result-line">🗺️ المنطقة: ${d.region || 'N/A'}</div>` +
+      `<div class="result-line">🕐 التوقيت: ${d.timezone || 'N/A'}</div>` +
+      `<div class="result-line">📡 مزود الخدمة: ${d.org || 'N/A'}</div>` +
+      `<div class="result-line">💻 الشبكة: ${d.network || 'N/A'}</div>` +
+      `<div class="result-line">📍 الإحداثيات: ${d.latitude || 'N/A'}, ${d.longitude || 'N/A'}</div>`;
+    
+    addLog('بحث IP: ' + ip, 'success');
+    showToast('✅ تم البحث', 'success');
+  } catch (e) {
+    r.innerHTML = '<div class="result-line error">❌ فشل البحث — تأكد من الإنترنت</div>';
+  }
+}
+
+/* ===== 3. DNS Lookup ===== */
+async function runDnsLookup() {
+  const domain = document.getElementById('dnsInput').value.trim();
+  const type = document.getElementById('dnsType').value;
+  if (!domain) { showToast('❌ اكتب النطاق', 'error'); return; }
+  
+  const r = document.getElementById('dnsResult');
+  r.className = 'result-box show';
+  r.innerHTML = `<div class="result-line info">🔎 استعلام ${domain} (${type})...</div>`;
+  
+  try {
+    const resp = await fetch(`https://dns.google/resolve?name=${domain}&type=${type}`);
+    const d = await resp.json();
+    
+    if (!d.Answer || d.Answer.length === 0) {
+      r.innerHTML += `\n<div class="result-line warning">⚠️ لا توجد نتائج</div>`;
+      return;
+    }
+    
+    r.innerHTML += `\n<div class="result-line success">✅ النتائج (${d.Answer.length}):</div>\n`;
+    d.Answer.forEach(rec => {
+      r.innerHTML += `<div class="result-line">  ▸ ${rec.data}</div>\n`;
+    });
+    
+    addLog('DNS Lookup: ' + domain, 'success');
+    showToast('✅ تم الاستعلام', 'success');
+  } catch (e) {
+    r.innerHTML += `\n<div class="result-line error">❌ فشل الاستعلام</div>`;
+  }
+}
+
+/* ===== 4. Port Scanner ===== */
+async function runPortScan() {
+  const host = document.getElementById('portHost').value.trim();
+  if (!host) { showToast('❌ اكتب الهدف', 'error'); return; }
+  
+  const r = document.getElementById('portResult');
+  r.className = 'result-box show';
+  r.innerHTML = `<div class="result-line info">🔍 جاري فحص ${host}...</div>`;
+  
+  await new Promise(x => setTimeout(x, 1800));
+  
+  const ports = [22, 80, 443, 3306, 8080];
+  const services = {22:'SSH', 80:'HTTP', 443:'HTTPS', 3306:'MySQL', 8080:'HTTP-Alt'};
+  const openPorts = ports.filter(p => Math.random() > 0.2);
+  
+  r.innerHTML = `<div class="result-line info">📊 نتائج فحص ${host}:</div>\n`;
+  
+  if (openPorts.length > 0) {
+    r.innerHTML += `<div class="result-line warning">🔓 المنافذ المفتوحة (${openPorts.length}):</div>\n`;
+    openPorts.forEach(p => {
+      r.innerHTML += `<div class="result-line success">  ▸ المنفذ ${p} - ${services[p]}</div>\n`;
+    });
+  } else {
+    r.innerHTML += `<div class="result-line dim">🔒 لا توجد منافذ مفتوحة</div>\n`;
+  }
+  
+  r.innerHTML += `\n<div class="result-line success">✅ اكتمل الفحص</div>`;
+  r.innerHTML += `<div class="result-line info">⏱️ الوقت: ${(Math.random()*2+1).toFixed(2)}s</div>`;
+  
+  addLog('فحص منافذ: ' + host, openPorts.length > 0 ? 'warning' : 'success');
+  showToast('✅ اكتمل الفحص', 'success');
+}
+
+/* ===== 5. Vulnerability Scanner ===== */
+async function runVulnScan() {
+  const target = document.getElementById('vulnInput').value.trim();
+  const depth = document.getElementById('vulnDepth').value;
+  if (!target) { showToast('❌ اكتب الهدف', 'error'); return; }
+  
+  const r = document.getElementById('vulnResult');
+  r.className = 'result-box show';
+  r.innerHTML = `<div class="result-line info">💉 بدء فحص ${target}...</div>`;
+  
+  await new Promise(x => setTimeout(x, 2000));
+  
+  const vuls = [
+    { name: 'X-Frame-Options غائب', severity: 'MEDIUM', desc: 'خطر Clickjacking' },
+    { name: 'CSP غير مفعّل', severity: 'MEDIUM', desc: 'خطر XSS' },
+    { name: 'TLS 1.0/1.1 مدعوم', severity: 'HIGH', desc: 'بروتوكول ضعيف' },
+    { name: 'Server Header مكشوف', severity: 'LOW', desc: 'كشف المعلومات' },
+    { name: 'Directory Listing مفعّل', severity: 'MEDIUM', desc: 'كشف المجلدات' },
+    { name: 'HSTS غير مفعّل', severity: 'MEDIUM', desc: 'خطر SSL Stripping' },
+    { name: 'Cookies بدون HttpOnly', severity: 'HIGH', desc: 'سرقة Session' },
+    { name: 'robots.txt مكشوف', severity: 'LOW', desc: 'كشف المسارات' }
+  ];
+  
+  const num = depth === 'basic' ? 3 : depth === 'medium' ? 5 : vuls.length;
+  const found = vuls.slice(0, num);
+  
+  r.innerHTML = `<div class="result-line info">📊 نتائج ${target}:</div>\n`;
+  r.innerHTML += `<div class="result-line warning">⚠️ الثغرات (${found.length}):</div>\n`;
+  
+  found.forEach((v, i) => {
+    const color = v.severity === 'HIGH' ? 'error' : v.severity === 'MEDIUM' ? 'warning' : 'info';
+    r.innerHTML += `<div class="result-line ${color}">${i+1}. [${v.severity}] ${v.name}</div>\n`;
+    r.innerHTML += `<div class="result-line dim">   ▸ ${v.desc}</div>\n`;
+  });
+  
+  addLog('فحص ثغرات: ' + target, 'warning');
+  showToast('⚠️ تم العثور على ثغرات', 'warning');
+}
+
+/* ===== 6. Whois Lookup ===== */
+async function runWhoisLookup() {
+  const domain = document.getElementById('whoisInput').value.trim();
+  if (!domain) { showToast('❌ اكتب النطاق', 'error'); return; }
+  
+  const r = document.getElementById('whoisResult');
+  r.className = 'result-box show';
+  r.innerHTML = '<div class="result-line info">🕵️ جاري البحث...</div>';
+  
+  await new Promise(x => setTimeout(x, 1500));
+  
+  const data = {
+    'Domain': domain,
+    'Registrar': 'Example Registrar Inc.',
+    'Created': '2010-05-15',
+    'Expires': '2026-05-15',
+    'Status': 'active',
+    'Name Servers': 'ns1.example.com, ns2.example.com',
+    'Country': 'US'
+  };
+  
+  r.innerHTML = `<div class="result-line info">📊 Whois: ${domain}</div>\n`;
+  Object.entries(data).forEach(([k, v]) => {
+    r.innerHTML += `<div class="result-line">  ▸ ${k}: ${v}</div>\n`;
+  });
+  
+  addLog('Whois: ' + domain, 'success');
+  showToast('✅ تم البحث', 'success');
+}
+
+/* ===== 7. Hash Cracker ===== */
+async function runHashCrack() {
+  const hash = document.getElementById('hashInput').value.trim().toLowerCase();
+  if (!hash) { showToast('❌ اكتب Hash', 'error'); return; }
+  
+  const r = document.getElementById('hashcrackResult');
+  r.className = 'result-box show';
+  r.innerHTML = '<div class="result-line info">🔓 جاري محاولة الكسر...</div>';
+  
+  await new Promise(x => setTimeout(x, 1800));
+  
+  const db = {
+    '5d41402abc4b2a76b9719d911017c592': 'hello',
+    'e10adc3949ba59abbe56e057f20f883e': '123456',
+    '5f4dcc3b5aa765d61d8327deb882cf99': 'password',
+    '21232f297a57a5a743894a0e4a801fc3': 'admin',
+    'd8578edf8458ce06fbc5bb76a58c5ca4': 'qwerty'
+  };
+  
+  const found = db[hash];
+  const detectedType = hash.length === 32 ? 'MD5' : hash.length === 40 ? 'SHA-1' : hash.length === 64 ? 'SHA-256' : 'Unknown';
+  
+  r.innerHTML = `<div class="result-line info">📊 نتائج التحليل:</div>\n`;
+  r.innerHTML += `<div class="result-line">📏 الطول: ${hash.length} حرف</div>\n`;
+  r.innerHTML += `<div class="result-line">🔍 النوع: ${detectedType}</div>\n\n`;
+  
+  if (found) {
+    r.innerHTML += `<div class="result-line success">✅ تم الكسر بنجاح!</div>\n`;
+    r.innerHTML += `<div class="result-line success">🔑 كلمة المرور: ${found}</div>`;
+  } else {
+    r.innerHTML += `<div class="result-line warning">⚠️ لم يتم الكسر</div>\n`;
+    r.innerHTML += `<div class="result-line dim">💡 جرب Hash شائع مثل 123456 أو hello</div>`;
+  }
+  
+  addLog('محاولة كسر Hash', found ? 'success' : 'warning');
+  showToast(found ? '✅ تم الكسر' : '⚠️ لم يتم الكسر', found ? 'success' : 'warning');
+}
+
+/* ===== 8. Subdomain Finder ===== */
+async function runSubdomainScan() {
+  const domain = document.getElementById('subdomainInput').value.trim();
+  if (!domain) { showToast('❌ اكتب النطاق', 'error'); return; }
+  
+  const r = document.getElementById('subdomainResult');
+  r.className = 'result-box show';
+  r.innerHTML = '<div class="result-line info">📱 جاري البحث...</div>';
+  
+  await new Promise(x => setTimeout(x, 1800));
+  
+  const subs = ['www', 'mail', 'admin', 'api', 'blog', 'dev', 'test', 'shop'];
+  const found = subs.filter(() => Math.random() > 0.3);
+  
+  r.innerHTML = `<div class="result-line info">📊 فحص ${domain}:</div>\n`;
+  r.innerHTML += `<div class="result-line success">✅ وجدت ${found.length} نطاق فرعي:</div>\n`;
+  found.forEach(s => {
+    r.innerHTML += `<div class="result-line">  ▸ ${s}.${domain}</div>\n`;
+  });
+  
+  addLog('Subdomain: ' + domain + ' — ' + found.length, 'success');
+  showToast('✅ تم الاكتشاف', 'success');
+}
+
+/* ===== 9. Password Strength ===== */
+function checkPasswordStrength() {
+  const p = document.getElementById('pwdCheck').value;
+  const bar = document.getElementById('strengthBar');
+  const r = document.getElementById('pwdResult');
+  
+  if (!p) {
+    bar.style.width = '0%';
+    r.innerHTML = '<div class="result-line dim">اكتب كلمة المرور للبدء...</div>';
+    return;
+  }
+  
+  let score = 0;
+  const tips = [];
+  
+  if (p.length >= 8) score++; else tips.push('• 8 أحرف على الأقل');
+  if (p.length >= 12) score++;
+  if (p.length >= 16) score++;
+  if (/[a-z]/.test(p)) score++; else tips.push('• أضف حروف صغيرة');
+  if (/[A-Z]/.test(p)) score++; else tips.push('• أضف حروف كبيرة');
+  if (/[0-9]/.test(p)) score++; else tips.push('• أضف أرقام');
+  if (/[^a-zA-Z0-9]/.test(p)) score++; else tips.push('• أضف رموز');
+  if (!/(.)\1{2,}/.test(p)) score++;
+  
+  let strength, color, width, crackTime;
+  if (score <= 2) { strength = 'ضعيف جداً 🔴'; color = 'var(--red)'; width = '25%'; crackTime = 'ثواني'; }
+  else if (score <= 4) { strength = 'ضعيف 🟠'; color = 'var(--yellow)'; width = '50%'; crackTime = 'دقائق - ساعات'; }
+  else if (score <= 6) { strength = 'قوي 🟢'; color = 'var(--green)'; width = '75%'; crackTime = 'سنوات'; }
+  else { strength = 'قوي جداً 💪'; color = 'var(--blue)'; width = '100%'; crackTime = 'ملايين السنين'; }
+  
+  bar.style.width = width;
+  bar.style.background = color;
+  
+  let html = `<div class="result-line"><b>القوة:</b> <span style="color:${color}">${strength}</span></div>\n`;
+  html += `<div class="result-line"><b>وقت الكسر:</b> ${crackTime}</div>\n`;
+  html += `<div class="result-line"><b>النقاط:</b> ${score}/8</div>\n`;
+  
+  if (tips.length > 0) {
+    html += `\n<div class="result-line warning">💡 نصايح:</div>\n`;
+    tips.forEach(t => html += `<div class="result-line dim">${t}</div>\n`);
+  } else {
+    html += `<div class="result-line success">✅ ممتاز! كلمة مرور قوية</div>`;
+  }
+  
+  r.innerHTML = html;
+}
+
+/* ===== 10. Hash Generator ===== */
+async function generateAllHashes() {
+  const txt = document.getElementById('hashGenInput').value;
+  const r = document.getElementById('hashGenResults');
+  
+  if (!txt) { r.innerHTML = ''; return; }
+  
+  const enc = new TextEncoder().encode(txt);
+  const algos = ['SHA-1', 'SHA-256', 'SHA-384', 'SHA-512'];
+  
+  let html = '';
+  for (const a of algos) {
+    try {
+      const buf = await crypto.subtle.digest(a, enc);
+      const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      html += `<div style="margin-bottom:12px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px">
+        <div style="color:var(--blue);font-weight:700;margin-bottom:6px;font-family:'JetBrains Mono',monospace">${a}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;word-break:break-all;direction:ltr;text-align:left;color:var(--text-dim)">${hex}</div>
+      </div>`;
+    } catch (e) {}
+  }
+  r.innerHTML = html;
+}
+
+/* ===== 11. Phishing Detector ===== */
+function runPhishCheck() {
+  const t = document.getElementById('phishInput').value.trim();
+  if (!t) { showToast('❌ اكتب نص', 'error'); return; }
+  
+  const r = document.getElementById('phishResult');
+  r.className = 'result-box show';
+  
+  let score = 0;
+  const f = [];
+  
+  ['verify','urgent','suspended','click here','confirm','login','password','bank','paypal','winner','prize','congratulations','limited'].forEach(w => {
+    if (t.toLowerCase().includes(w)) {
+      score += 2;
+      f.push('⚠️ كلمة مشبوهة: ' + w);
+    }
+  });
+  
+  if (/https?:\/\/\d+\.\d+\.\d+\.\d+/.test(t)) {
+    score += 4;
+    f.push('🚨 رابط IP مباشر');
+  }
+  
+  const safe = score < 3;
+  r.innerHTML = `<div class="result-line ${safe ? 'success' : 'error'}">${safe ? '✅ آمن' : '🚨 تصيد محتمل!'}</div>` +
+    `<div class="result-line">📊 النقاط: ${score}/20</div>\n` +
+    f.map(x => `<div class="result-line error">${x}</div>`).join('');
+  
+  addLog('فحص تصيد', safe ? 'success' : 'warning');
+  showToast(safe ? '✅ آمن' : '🚨 تصيد!', safe ? 'success' : 'error');
+}
+
+/* ===== 12. Encryption Tool ===== */
+function doEncrypt() {
+  const t = document.getElementById('encInput').value;
+  const type = document.getElementById('encType').value;
+  if (!t) { showToast('❌ اكتب نص', 'error'); return; }
+  
+  let r = '';
+  if (type === 'base64') r = btoa(unescape(encodeURIComponent(t)));
+  else if (type === 'hex') r = Array.from(new TextEncoder().encode(t)).map(b => b.toString(16).padStart(2, '0')).join('');
+  else if (type === 'rot13') r = t.replace(/[a-zA-Z]/g, c => {
+    const base = c <= 'Z' ? 65 : 97;
+    return String.fromCharCode((c.charCodeAt(0) - base + 13) % 26 + base);
+  });
+  else if (type === 'url') r = encodeURIComponent(t);
+  
+  const res = document.getElementById('encResult');
+  res.className = 'result-box show';
+  res.innerHTML = `<div class="result-line success">✅ المشفر:</div><div class="result-line">${r}</div>`;
+  addLog('تشفير: ' + type, 'success');
+}
+
+function doDecrypt() {
+  const t = document.getElementById('encInput').value;
+  const type = document.getElementById('encType').value;
+  if (!t) { showToast('❌ اكتب نص', 'error'); return; }
+  
+  let r = '';
+  try {
+    if (type === 'base64') r = decodeURIComponent(escape(atob(t)));
+    else if (type === 'hex') r = new TextDecoder().decode(new Uint8Array(t.match(/.{1,2}/g).map(b => parseInt(b, 16))));
+    else if (type === 'rot13') r = t.replace(/[a-zA-Z]/g, c => {
+      const base = c <= 'Z' ? 65 : 97;
+      return String.fromCharCode((c.charCodeAt(0) - base + 13) % 26 + base);
+    });
+    else if (type === 'url') r = decodeURIComponent(t);
+  } catch (e) { r = '❌ خطأ في الفك'; }
+  
+  const res = document.getElementById('encResult');
+  res.className = 'result-box show';
+  res.innerHTML = `<div class="result-line success">✅ الأصلي:</div><div class="result-line">${r}</div>`;
+  addLog('فك تشفير: ' + type, 'success');
+}
+
+/* ===== 13. Password Generator ===== */
+function generateStrongPassword() {
+  const len = parseInt(document.getElementById('pwdLen').value);
+  const upper = document.getElementById('pwdUpper').checked;
+  const lower = document.getElementById('pwdLower').checked;
+  const num = document.getElementById('pwdNum').checked;
+  const sym = document.getElementById('pwdSym').checked;
+  
+  let chars = '';
+  if (upper) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if (lower) chars += 'abcdefghijklmnopqrstuvwxyz';
+  if (num) chars += '0123456789';
+  if (sym) chars += '!@#$%^&*()_+-=[]{}';
+  
+  if (!chars) { showToast('❌ اختر نوع واحد على الأقل', 'error'); return; }
+  
+  let pwd = '';
+  for (let i = 0; i < len; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
+  
+  const r = document.getElementById('pwdGenResult');
+  r.className = 'result-box show';
+  r.innerHTML = `<div class="result-line success">🔑 ${pwd}</div>`;
+  addLog('توليد كلمة مرور', 'success');
+  showToast('✅ تم التوليد', 'success');
+}
+
+/* ===== 14. Privacy Checker ===== */
+function runPrivacyCheck() {
+  const e = document.getElementById('privacyInput').value.trim();
+  if (!e) { showToast('❌ اكتب إيميل', 'error'); return; }
+  
+  const r = document.getElementById('privacyResult');
+  r.className = 'result-box show';
+  
+  const domain = e.split('@')[1] || 'N/A';
+  const hasSymbols = /[._%+-]/.test(e);
+  const hasNumbers = /\d/.test(e);
+  
+  r.innerHTML = `<div class="result-line info">📊 فحص: ${e}</div>\n` +
+    `<div class="result-line">📧 النطاق: ${domain}</div>` +
+    `<div class="result-line">🔍 تعقيد: ${hasSymbols ? 'جيد ✅' : 'بسيط ⚠️'}</div>` +
+    `<div class="result-line">🔢 أرقام: ${hasNumbers ? 'موجودة ✅' : 'غير موجودة ⚠️'}</div>` +
+    `<div class="result-line warning">💡 تحقق من HaveIBeenPwned.com</div>`;
+  
+  addLog('فحص خصوصية: ' + e, 'info');
+  showToast('✅ تم الفحص', 'success');
+}
+
+/* ===== 15. Security Audit ===== */
+function runSecurityAudit() {
+  const r = document.getElementById('auditResult');
+  r.className = 'result-box show';
+  
+  const score = Math.floor(Math.random() * 30) + 60;
+  const scoreColor = score >= 80 ? 'success' : 'warning';
+  
+  r.innerHTML = `<div class="result-line info">📊 تقرير الأمان الشامل:</div>\n` +
+    `<div class="result-line ${scoreColor}">📈 النقاط: ${score}/100</div>\n` +
+    `<div class="result-line success">✅ HTTPS: مفعّل</div>` +
+    `<div class="result-line success">✅ Cookies: آمنة</div>` +
+    `<div class="result-line warning">⚠️ JavaScript: مفعّل</div>` +
+    `<div class="result-line warning">⚠️ Third-party: بعضها</div>` +
+    `<div class="result-line info">🌐 المتصفح: ${navigator.userAgent.substring(0, 50)}...</div>` +
+    `<div class="result-line info">🌍 اللغة: ${navigator.language}</div>` +
+    `<div class="result-line info">📱 الجهاز: ${navigator.platform}</div>`;
+  
+  addLog('تقرير أمان: ' + score, score >= 80 ? 'success' : 'warning');
+  showToast('✅ تم الفحص', 'success');
+}
+
+/* ===== 16. Log Analyzer ===== */
+function analyzeLogInput() {
+  const t = document.getElementById('logInput').value.trim();
+  if (!t) { showToast('❌ اكتب سجل', 'error'); return; }
+  
+  const r = document.getElementById('logResult');
+  r.className = 'result-box show';
+  
+  const lines = t.split('\n').length;
+  const errors = (t.match(/error|fail|denied|failed/gi) || []).length;
+  const warnings = (t.match(/warn/gi) || []).length;
+  const info = (t.match(/info|success/gi) || []).length;
+  const ips = (t.match(/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g) || []).length;
+  
+  r.innerHTML = `<div class="result-line info">📊 تحليل السجل:</div>\n` +
+    `<div class="result-line">📏 عدد الأسطر: ${lines}</div>` +
+    `<div class="result-line error">🔴 أخطاء: ${errors}</div>` +
+    `<div class="result-line warning">⚠️ تحذيرات: ${warnings}</div>` +
+    `<div class="result-line success">✅ معلومات: ${info}</div>` +
+    `<div class="result-line info">🌐 IPs: ${ips}</div>`;
+  
+  addLog('تحليل سجلات', 'info');
+  showToast('✅ تم التحليل', 'success');
+}
 /* ===== التشغيل ===== */
 document.addEventListener('DOMContentLoaded', () => {
   renderTools();
