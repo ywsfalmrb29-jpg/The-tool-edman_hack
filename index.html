@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👑 EDMAN SECURITY LAB</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#05080d;--bg-2:#0a0f1a;--panel:#0f1622;--panel-2:#141e2e;
+  --border:#1a2a3e;--border-hover:#2a4a6e;
+  --blue:#00d4ff;--blue-dim:#0088aa;--blue-glow:rgba(0,212,255,0.5);
+  --green:#00ff88;--green-dim:#00aa5a;
+  --red:#ff3355;--red-dim:#aa2233;--yellow:#ffcc00;
+  --text:#e0f0ff;--text-dim:#6a8aa8;--text-dimmer:#3a5a78;
+}
+
+body{
+  font-family:'Cairo',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;line-height:1.6;
+  overflow-x:hidden;position:relative;
+}
+
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size:40px 40px;
+  z-index:0;pointer-events:none;
+}
+
+body::after{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0,212,255,0.08), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(0,255,136,0.06), transparent 40%);
+  z-index:1;pointer-events:none;
+}
+
+header{
+  position:sticky;top:0;z-index:100;
+  padding:15px 20px;display:flex;
+  justify-content:space-between;align-items:center;
+  background:rgba(5,8,13,0.95);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;gap:12px;
+}
+
+.logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.1rem;font-weight:700;letter-spacing:1px;
+}
+
+.logo-icon{font-size:1.6rem;animation:iconPulse 2s ease-in-out infinite}
+
+@keyframes iconPulse{
+  0%,100%{filter:drop-shadow(0 0 8px var(--blue))}
+  50%{filter:drop-shadow(0 0 20px var(--blue))}
+}
+
+.logo-text{color:var(--blue);text-shadow:0 0 10px var(--blue-glow)}
+
+.logo-sub{
+  color:var(--text-dim);font-size:0.7rem;
+  letter-spacing:2px;display:block;margin-top:-3px;
+}
+
+.header-status{
+  display:flex;align-items:center;gap:6px;
+  padding:6px 14px;background:rgba(0,255,136,0.08);
+  border:1px solid rgba(0,255,136,0.3);border-radius:20px;
+  font-size:0.75rem;font-weight:700;color:var(--green);
+}
+
+.status-dot{
+  width:8px;height:8px;background:var(--green);border-radius:50%;
+  box-shadow:0 0 10px var(--green);animation:dotPulse 1.5s infinite;
+}
+
+@keyframes dotPulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.5;transform:scale(1.3)}
+}
+
+main{
+  position:relative;z-index:5;max-width:1200px;
+  margin:0 auto;padding:20px 15px 100px;
+}
+
+.hero{text-align:center;padding:30px 15px 40px;margin-bottom:20px}
+
+.hero h1{
+  font-family:'JetBrains Mono',monospace;
+  font-size:clamp(1.8rem,6vw,3rem);font-weight:900;
+  letter-spacing:2px;margin-bottom:10px;color:var(--text);
+  text-shadow:0 0 10px var(--blue-glow),0 0 30px var(--blue-glow);
+}
+
+.hero h1 .accent{color:var(--blue)}
+
+.hero p{
+  color:var(--text-dim);font-size:clamp(0.85rem,2.5vw,1rem);
+  max-width:600px;margin:0 auto;letter-spacing:0.5px;
+}
+
+.hero-tags{
+  display:flex;justify-content:center;gap:8px;
+  flex-wrap:wrap;margin-top:18px;
+}
+
+.tag{
+  padding:5px 12px;background:rgba(0,212,255,0.08);
+  border:1px solid rgba(0,212,255,0.25);border-radius:15px;
+  font-size:0.72rem;font-weight:700;color:var(--blue);
+  font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;
+}
+
+.main-tabs{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:12px;margin-bottom:25px;
+}
+
+.main-tab{
+  padding:18px 20px;background:var(--panel);
+  border:1px solid var(--border);border-radius:12px;
+  cursor:pointer;transition:all 0.3s;text-align:center;
+  font-family:'Cairo',sans-serif;color:var(--text);
+  display:flex;align-items:center;justify-content:center;
+  gap:10px;font-weight:700;font-size:0.95rem;
+  position:relative;overflow:hidden;
+}
+
+.main-tab::before{
+  content:'';position:absolute;top:0;left:-100%;
+  width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,0.1),transparent);
+  transition:left 0.5s;
+}
+
+.main-tab:hover{
+  border-color:var(--blue);transform:translateY(-3px);
+  box-shadow:0 8px 25px rgba(0,212,255,0.2);
+}
+
+.main-tab:hover::before{left:100%}
+
+.main-tab.active{
+  background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,255,136,0.08));
+  border-color:var(--blue);box-shadow:0 0 25px rgba(0,212,255,0.3);
+}
+
+.main-tab .tab-icon{
+  font-size:1.4rem;filter:drop-shadow(0 0 6px rgba(0,212,255,0.5));
+}
+
+.section-header{
+  display:flex;align-items:center;gap:12px;
+  padding:15px 20px;background:var(--panel);
+  border:1px solid var(--border);border-radius:12px;
+  margin-bottom:20px;flex-wrap:wrap;
+}
+
+.section-icon{font-size:1.8rem}
+.section-title{flex:1}
+
+.section-title h2{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.2rem;font-weight:700;color:var(--blue);letter-spacing:1px;
+}
+
+.section-title p{color:var(--text-dim);font-size:0.82rem;margin-top:2px}
+
+.section-count{
+  padding:6px 14px;background:rgba(0,212,255,0.1);
+  border:1px solid rgba(0,212,255,0.3);border-radius:20px;
+  font-size:0.78rem;font-weight:700;color:var(--blue);
+  font-family:'JetBrains Mono',monospace;
+}
+
+.tools-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:12px;margin-bottom:25px;
+}
+
+.tool-card{
+  padding:20px;background:var(--panel);
+  border:1px solid var(--border);border-radius:12px;
+  cursor:pointer;transition:all 0.3s;
+  position:relative;overflow:hidden;
+}
+
+.tool-card::before{
+  content:'';position:absolute;top:0;right:0;
+  width:3px;height:100%;background:var(--blue);
+  transform:scaleY(0);transition:transform 0.3s;
+  box-shadow:0 0 15px var(--blue);
+}
+
+.tool-card:hover{
+  border-color:var(--blue);transform:translateY(-4px);
+  box-shadow:0 10px 30px rgba(0,212,255,0.15);
+}
+
+.tool-card:hover::before{transform:scaleY(1)}
+
+.tool-card.red::before{background:var(--red);box-shadow:0 0 15px var(--red)}
+.tool-card.red:hover{border-color:var(--red);box-shadow:0 10px 30px rgba(255,51,85,0.15)}
+.tool-card.green::before{background:var(--green);box-shadow:0 0 15px var(--green)}
+.tool-card.green:hover{border-color:var(--green);box-shadow:0 10px 30px rgba(0,255,136,0.15)}
+
+.tool-icon{font-size:2rem;margin-bottom:12px;display:block}
+.tool-name{font-weight:700;font-size:1rem;margin-bottom:6px;color:var(--text)}
+.tool-desc{color:var(--text-dim);font-size:0.82rem;line-height:1.6}
+
+.tool-badge{
+  position:absolute;top:12px;left:12px;
+  padding:3px 8px;background:rgba(0,212,255,0.15);
+  border:1px solid rgba(0,212,255,0.4);border-radius:6px;
+  font-size:0.65rem;font-weight:700;color:var(--blue);
+  font-family:'JetBrains Mono',monospace;
+}
+
+.tool-badge.red{
+  background:rgba(255,51,85,0.15);
+  border-color:rgba(255,51,85,0.4);color:var(--red);
+}
+
+.tool-badge.green{
+  background:rgba(0,255,136,0.15);
+  border-color:rgba(0,255,136,0.4);color:var(--green);
+}
+
+.section{display:none;animation:fadeIn 0.4s ease}
+.section.active{display:block}
+
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(15px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.tool-panel{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:15px;padding:25px;margin-bottom:20px;
+  animation:fadeIn 0.3s ease;
+}
+
+.tool-panel-header{
+  display:flex;align-items:center;gap:12px;
+  padding-bottom:18px;border-bottom:1px solid var(--border);
+  margin-bottom:20px;flex-wrap:wrap;
+}
+
+.back-btn{
+  padding:8px 16px;background:rgba(0,212,255,0.1);
+  border:1px solid rgba(0,212,255,0.3);border-radius:8px;
+  color:var(--blue);cursor:pointer;font-family:'Cairo',sans-serif;
+  font-size:0.85rem;font-weight:700;transition:all 0.3s;
+  display:flex;align-items:center;gap:6px;
+}
+
+.back-btn:hover{background:rgba(0,212,255,0.2);border-color:var(--blue)}
+
+.tool-panel-title{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.1rem;font-weight:700;color:var(--blue);flex:1;
+}
+
+.form-group{margin-bottom:18px}
+
+.form-label{
+  display:block;font-size:0.85rem;font-weight:700;
+  color:var(--text-dim);margin-bottom:8px;letter-spacing:0.5px;
+}
+
+.form-input,.form-textarea,.form-select{
+  width:100%;padding:14px 16px;background:var(--bg);
+  border:2px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:'Cairo',sans-serif;
+  font-size:0.95rem;outline:none;transition:all 0.3s;
+}
+
+.form-input:focus,.form-textarea:focus,.form-select:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(0,212,255,0.15);
+  background:var(--bg-2);
+}
+
+.form-input.mono,.form-textarea.mono{
+  font-family:'JetBrains Mono',monospace;
+  direction:ltr;text-align:left;
+}
+
+.form-textarea{resize:vertical;min-height:120px}
+
+.btn{
+  padding:13px 28px;border:none;border-radius:10px;
+  font-family:'Cairo',sans-serif;font-size:0.92rem;
+  font-weight:700;cursor:pointer;transition:all 0.3s;
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:8px;letter-spacing:0.3px;
+}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--blue),var(--blue-dim));
+  color:#001a22;box-shadow:0 5px 20px rgba(0,212,255,0.3);
+}
+
+.btn-primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 30px rgba(0,212,255,0.5);
+}
+
+.btn-secondary{
+  background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+}
+
+.btn-secondary:hover{border-color:var(--blue);color:var(--blue)}
+
+.btn-green{
+  background:linear-gradient(135deg,var(--green),var(--green-dim));
+  color:#001a0e;box-shadow:0 5px 20px rgba(0,255,136,0.3);
+}
+
+.btn-green:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 30px rgba(0,255,136,0.5);
+}
+
+.btn-block{width:100%}
+.btn-group{display:flex;gap:10px;flex-wrap:wrap}
+
+.result-box{
+  margin-top:20px;padding:18px;background:var(--bg);
+  border:1px solid var(--border);border-left:4px solid var(--blue);
+  border-radius:10px;font-family:'JetBrains Mono',monospace;
+  font-size:0.88rem;line-height:1.7;min-height:60px;
+  direction:ltr;text-align:left;white-space:pre-wrap;
+  word-break:break-word;display:none;animation:fadeIn 0.3s ease;
+}
+
+.result-box.show{display:block}
+
+.result-line{padding:4px 0;color:var(--text)}
+.result-line.success{color:var(--green)}
+.result-line.error{color:var(--red)}
+.result-line.warning{color:var(--yellow)}
+.result-line.info{color:var(--blue)}
+.result-line.dim{color:var(--text-dim)}
+
+.log-list{display:flex;flex-direction:column;gap:10px}
+
+.log-item{
+  padding:15px;background:var(--panel);
+  border:1px solid var(--border);border-left:4px solid var(--blue);
+  border-radius:10px;
+}
+
+.log-item.info{border-left-color:var(--blue)}
+.log-item.success{border-left-color:var(--green)}
+.log-item.error{border-left-color:var(--red)}
+
+.log-title{font-weight:700;margin-bottom:3px;font-size:0.9rem}
+.log-time{color:var(--text-dim);font-size:0.75rem;font-family:'JetBrains Mono',monospace}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-dim)}
+.empty-state .icon{font-size:4rem;margin-bottom:15px;opacity:0.5}
+.empty-state h3{color:var(--text);margin-bottom:8px;font-family:'JetBrains Mono',monospace}
+
+.about-title{
+  color:var(--blue);margin-bottom:15px;
+  font-family:'JetBrains Mono',monospace;font-size:1.1rem;
+}
+
+.about-text{color:var(--text);line-height:1.9;margin-bottom:20px}
+
+.about-subtitle{
+  color:var(--blue);margin-bottom:12px;
+  font-family:'JetBrains Mono',monospace;
+}
+
+.about-list{color:var(--text-dim);line-height:2;padding-right:20px;margin-bottom:20px}
+
+.accent-text{color:var(--blue)}
+.dim-text{color:var(--text-dim);font-size:0.85rem}
+
+footer{
+  position:relative;z-index:5;margin-top:40px;
+  padding:25px 20px;background:rgba(5,8,13,0.95);
+  border-top:1px solid var(--border);text-align:center;
+}
+
+.footer-links{
+  display:flex;justify-content:center;gap:10px;
+  flex-wrap:wrap;margin-bottom:18px;
+}
+
+.footer-link{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 16px;background:var(--panel);
+  border:1px solid var(--border);border-radius:20px;
+  text-decoration:none;color:var(--text-dim);
+  font-weight:600;font-size:0.8rem;transition:all 0.3s;
+  font-family:'JetBrains Mono',monospace;
+}
+
+.footer-link:hover{
+  border-color:var(--blue);color:var(--blue);
+  box-shadow:0 0 15px rgba(0,212,255,0.3);
+}
+
+.footer-brand{
+  font-family:'JetBrains Mono',monospace;font-size:1rem;
+  font-weight:700;color:var(--blue);
+  text-shadow:0 0 10px var(--blue-glow);
+  margin-bottom:6px;letter-spacing:1px;
+}
+
+.footer-text{
+  color:var(--text-dimmer);font-size:0.78rem;
+  font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;
+}
+
+.toast{
+  position:fixed;bottom:30px;left:50%;
+  transform:translateX(-50%) translateY(100px);
+  padding:14px 24px;background:var(--panel);
+  border:1px solid var(--blue);border-radius:10px;
+  color:var(--text);font-weight:700;font-size:0.88rem;
+  box-shadow:0 10px 40px rgba(0,212,255,0.3);
+  z-index:1000;transition:all 0.4s;
+  font-family:'Cairo',sans-serif;max-width:90%;text-align:center;
+}
+
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:var(--green);box-shadow:0 10px 40px rgba(0,255,136,0.3)}
+.toast.error{border-color:var(--red);box-shadow:0 10px 40px rgba(255,51,85,0.3)}
+.toast.warning{border-color:var(--yellow);box-shadow:0 10px 40px rgba(255,204,0,0.3)}
+
+@media (max-width:768px){
+  header{padding:12px 15px}
+  .logo{font-size:0.95rem}
+  .logo-icon{font-size:1.3rem}
+  .header-status{padding:5px 10px;font-size:0.7rem}
+  main{padding:15px 12px 90px}
+  .hero{padding:20px 10px 25px}
+  .hero h1{font-size:1.5rem;letter-spacing:1px}
+  .hero p{font-size:0.82rem}
+  .tag{font-size:0.65rem;padding:4px 8px}
+  .main-tabs{grid-template-columns:1fr 1fr;gap:8px}
+  .main-tab{padding:14px 10px;font-size:0.78rem}
+  .main-tab .tab-icon{font-size:1.2rem}
+  .section-header{padding:12px 15px}
+  .section-icon{font-size:1.4rem}
+  .section-title h2{font-size:0.95rem}
+  .section-title p{font-size:0.75rem}
+  .section-count{padding:4px 10px;font-size:0.7rem}
+  .tools-grid{grid-template-columns:1fr;gap:10px}
+  .tool-card{padding:16px}
+  .tool-icon{font-size:1.7rem}
+  .tool-name{font-size:0.92rem}
+  .tool-desc{font-size:0.78rem}
+  .tool-panel{padding:18px}
+  .tool-panel-header{padding-bottom:14px;margin-bottom:15px}
+  .tool-panel-title{font-size:0.95rem}
+  .form-input,.form-textarea,.form-select{padding:12px 14px;font-size:0.88rem}
+  .btn{padding:11px 20px;font-size:0.85rem}
+  .result-box{padding:14px;font-size:0.8rem}
+  .footer-link{padding:6px 12px;font-size:0.72rem}
+  .footer-brand{font-size:0.88rem}
+  .footer-text{font-size:0.7rem}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-icon">👑</span>
+    <div>
+      <div class="logo-text">EDMAN SECURITY LAB</div>
+      <span class="logo-sub">ADVANCED ANALYZER</span>
+    </div>
+  </div>
+  <div class="header-status">
+    <span class="status-dot"></span>
+    <span>النظام يعمل</span>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>EDMAN <span class="accent">SECURITY LAB</span></h1>
+    <p>منصة تحليل أمني متقدمة — فحص الروابط والأكواد والملفات والشبكات</p>
+    <div class="hero-tags">
+      <span class="tag">URL</span>
+      <span class="tag">NETWORK</span>
+      <span class="tag">HASH</span>
+      <span class="tag">DNS</span>
+      <span class="tag">SECURITY</span>
+    </div>
+  </div>
+
+  <div class="main-tabs">
+    <button class="main-tab active" onclick="showSection('offensive', this)">
+      <span class="tab-icon">🔴</span>
+      <span>EDMAN OFFENSIVE</span>
+    </button>
+    <button class="main-tab" onclick="showSection('defensive', this)">
+      <span class="tab-icon">🔵</span>
+      <span>EDMAN DEFENSIVE</span>
+    </button>
+    <button class="main-tab" onclick="showSection('logs', this)">
+      <span class="tab-icon">📋</span>
+      <span>السجل</span>
+    </button>
+    <button class="main-tab" onclick="showSection('about', this)">
+      <span class="tab-icon">ℹ️</span>
+      <span>حول</span>
+    </button>
+  </div>
+
+  <section class="section active" id="section-offensive">
+    <div class="section-header">
+      <span class="section-icon">🔴</span>
+      <div class="section-title">
+        <h2>EDMAN OFFENSIVE</h2>
+        <p>أدوات الفحص والتحليل الهجومي</p>
+      </div>
+      <span class="section-count">8 أدوات</span>
+    </div>
+    <div class="tools-grid" id="offensiveGrid"></div>
+    <div id="offensive-tool-container"></div>
+  </section>
+
+  <section class="section" id="section-defensive">
+    <div class="section-header">
+      <span class="section-icon">🔵</span>
+      <div class="section-title">
+        <h2>EDMAN DEFENSIVE</h2>
+        <p>أدوات الحماية والدفاع</p>
+      </div>
+      <span class="section-count">8 أدوات</span>
+    </div>
+    <div class="tools-grid" id="defensiveGrid"></div>
+    <div id="defensive-tool-container"></div>
+  </section>
+
+  <section class="section" id="section-logs">
+    <div class="section-header">
+      <span class="section-icon">📋</span>
+      <div class="section-title">
+        <h2>ACTIVITY LOG</h2>
+        <p>سجل جميع العمليات</p>
+      </div>
+      <button class="btn btn-secondary" onclick="clearLogs()">🗑️ مسح السجل</button>
+    </div>
+    <div class="log-list" id="logsList">
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <h3>لا توجد عمليات</h3>
+        <p>ابدأ استخدام الأدوات وسيظهر السجل هنا</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="section-about">
+    <div class="section-header">
+      <span class="section-icon">ℹ️</span>
+      <div class="section-title">
+        <h2>ABOUT EDMAN SECURITY LAB</h2>
+        <p>حول المنصة</p>
+      </div>
+    </div>
+    <div class="tool-panel">
+      <h3 class="about-title">👑 EDMAN SECURITY LAB</h3>
+      <p class="about-text">
+        منصة تحليل أمني متقدمة توفر مجموعة شاملة من الأدوات للفحص والتحليل والحماية.
+        تعمل كل الأدوات محلياً في متصفحك — بياناتك لا تغادر جهازك.
+      </p>
+      <h4 class="about-subtitle">🎯 المميزات:</h4>
+      <ul class="about-list">
+        <li>✅ 16 أداة أمنية متقدمة</li>
+        <li>✅ تعمل 100% في المتصفح</li>
+        <li>✅ بدون تسجيل أو اشتراكات</li>
+        <li>✅ خصوصية كاملة</li>
+        <li>✅ سجل كامل للعمليات</li>
+      </ul>
+      <h4 class="about-subtitle">👨‍💻 المطور:</h4>
+      <p class="about-text">
+        <b class="accent-text">EDMAN HAKING</b><br>
+        <span class="dim-text">Ethical Hacker & Security Researcher</span>
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-links">
+    <a href="https://www.youtube.com/@Edman_haking-i4f" target="_blank" class="footer-link">
+      <span>▶️</span> YouTube
+    </a>
+    <a href="https://t.me/youssef7_HAKER" target="_blank" class="footer-link">
+      <span>✈️</span> Telegram
+    </a>
+    <a href="https://ywsfalmrb29-jpg.github.io/LEARN_HACK_EDMAN/" target="_blank" class="footer-link">
+      <span>🌐</span> Learn Security
+    </a>
+  </div>
+  <div class="footer-brand">👑 EDMAN HAKING 👑</div>
+  <div class="footer-text">EDMAN SECURITY LAB © 2025 — ALL RIGHTS RESERVED</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================
+   EDMAN SECURITY LAB - JavaScript
+   By Edman Haking
+   ============================================ */
+
+/* ===== قائمة الأدوات ===== */
+const OFFENSIVE_TOOLS = [
+  { id: 'urlscan', icon: '🌐', name: 'URL Scanner', desc: 'تحليل الروابط المشبوهة', badge: 'URL' },
+  { id: 'iplookup', icon: '📡', name: 'IP Lookup', desc: 'معلومات عنوان IP', badge: 'IP' },
+  { id: 'dns', icon: '🔎', name: 'DNS Lookup', desc: 'سجلات DNS للنطاق', badge: 'DNS' },
+  { id: 'portscan', icon: '🔍', name: 'Port Scanner', desc: 'فحص المنافذ المفتوحة', badge: 'SCAN' },
+  { id: 'vuln', icon: '💉', name: 'Vulnerability Scanner', desc: 'فحص الثغرات الأمنية', badge: 'VULN' },
+  { id: 'whois', icon: '🕵️', name: 'Whois Lookup', desc: 'معلومات النطاق', badge: 'WHOIS' },
+  { id: 'hashcrack', icon: '🔓', name: 'Hash Cracker', desc: 'كشف كلمات المرور', badge: 'HASH' },
+  { id: 'subdomain', icon: '📱', name: 'Subdomain Finder', desc: 'اكتشاف النطاقات الفرعية', badge: 'SUB' }
+];
+
+const DEFENSIVE_TOOLS = [
+  { id: 'pwdstrength', icon: '🛡️', name: 'Password Strength', desc: 'قياس قوة كلمة المرور', badge: 'PWD' },
+  { id: 'hashgen', icon: '🔐', name: 'Hash Generator', desc: 'توليد Hash آمن', badge: 'HASH' },
+  { id: 'phish', icon: '🎣', name: 'Phishing Detector', desc: 'كشف محاولات التصيد', badge: 'PHISH' },
+  { id: 'encrypt', icon: '🔒', name: 'Encryption Tool', desc: 'تشفير وفك تشفير', badge: 'ENC' },
+  { id: 'pwdgen', icon: '🔑', name: 'Password Generator', desc: 'توليد كلمات مرور قوية', badge: 'GEN' },
+  { id: 'privacy', icon: '🕵️', name: 'Privacy Checker', desc: 'فحص الخصوصية', badge: 'PRIV' },
+  { id: 'audit', icon: '📊', name: 'Security Audit', desc: 'تقرير شامل للأمان', badge: 'AUDIT' },
+  { id: 'loganalyzer', icon: '📝', name: 'Log Analyzer', desc: 'تحليل سجلات النشاط', badge: 'LOG' }
+];
+
+/* ===== السجل ===== */
+let activityLogs = [];
+
+function addLog(title, type = 'info') {
+  const time = new Date().toLocaleTimeString('ar-EG');
+  activityLogs.unshift({ title, type, time });
+  if (activityLogs.length > 50) activityLogs.pop();
+  renderLogs();
+}
+
+function renderLogs() {
+  const list = document.getElementById('logsList');
+  if (!list) return;
+  if (activityLogs.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><h3>لا توجد عمليات</h3><p>ابدأ استخدام الأدوات وسيظهر السجل هنا</p></div>`;
+    return;
+  }
+  list.innerHTML = activityLogs.map(l => `
+    <div class="log-item ${l.type}">
+      <div class="log-content">
+        <div class="log-title">${l.title}</div>
+        <div class="log-time">${l.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function clearLogs() {
+  if (!confirm('متأكد إنك عايز تمسح السجل؟')) return;
+  activityLogs = [];
+  renderLogs();
+  showToast('🗑️ تم مسح السجل', 'success');
+}
+
+/* ===== التنقل ===== */
+function showSection(section, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + section).classList.add('active');
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ===== عرض الأدوات ===== */
+function renderTools() {
+  const offGrid = document.getElementById('offensiveGrid');
+  const defGrid = document.getElementById('defensiveGrid');
+  
+  if (offGrid) {
+    offGrid.innerHTML = OFFENSIVE_TOOLS.map(t => `
+      <div class="tool-card red" onclick="openTool('${t.id}')">
+        <span class="tool-badge red">${t.badge}</span>
+        <span class="tool-icon">${t.icon}</span>
+        <div class="tool-name">${t.name}</div>
+        <div class="tool-desc">${t.desc}</div>
+      </div>
+    `).join('');
+  }
+  
+  if (defGrid) {
+    defGrid.innerHTML = DEFENSIVE_TOOLS.map(t => `
+      <div class="tool-card green" onclick="openTool('${t.id}')">
+        <span class="tool-badge green">${t.badge}</span>
+        <span class="tool-icon">${t.icon}</span>
+        <div class="tool-name">${t.name}</div>
+        <div class="tool-desc">${t.desc}</div>
+      </div>
+    `).join('');
+  }
+}
+
+/* ===== فتح أداة ===== */
+function openTool(toolId) {
+  const off = OFFENSIVE_TOOLS.find(t => t.id === toolId);
+  const def = DEFENSIVE_TOOLS.find(t => t.id === toolId);
+  const tool = off || def;
+  if (!tool) return;
+  
+  const type = off ? 'offensive' : 'defensive';
+  const container = document.getElementById(type + '-tool-container');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div class="tool-panel">
+      <div class="tool-panel-header">
+        <button class="back-btn" onclick="closeTool('${type}')">← رجوع</button>
+        <div class="tool-panel-title">${tool.icon} ${tool.name}</div>
+      </div>
+      <div id="toolContent">${getToolUI(toolId)}</div>
+    </div>
+  `;
+  
+  setTimeout(() => container.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  addLog('فتح أداة: ' + tool.name, 'info');
+}
+
+function closeTool(type) {
+  const c = document.getElementById(type + '-tool-container');
+  if (c) c.innerHTML = '';
+}
+
+/* ===== واجهات الأدوات ===== */
+function getToolUI(id) {
+  const UIs = {
+    urlscan: `
+      <div class="form-group">
+        <label class="form-label">الرابط المراد فحصه</label>
+        <input type="text" class="form-input mono" id="urlInput" placeholder="https://example.com/page">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="runUrlScan()">🌐 فحص الرابط</button>
+      <div class="result-box" id="urlResult"></div>
+    `,
+    iplookup: `
+      <div class="form-group">
+        <label class="form-label">عنوان IP</label>
+        <input type="text" class="form-input mono" id="ipInput" placeholder="8.8.8.8">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="runIpLookup()">📡 البحث</button>
+      <div class="result-box" id="ipResult"></div>
+    `,
+    dns: `
+      <div class="form-group">
+        <label class="form-label">اسم النطاق</label>
+        <input type="text" class="form-input mono" id="dnsInput" placeholder="example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">نوع السجل</label>
+        <select class="form-select" id="dnsType">
+          <option value="A">A - IPv4</option>
+          <option value="AAAA">AAAA - IPv6</option>
+          <option value="MX">MX - Mail</option>
+          <option value="NS">NS - Nameservers</option>
+          <option value="TXT">TXT - Text</option>
+          <option value="CNAME">CNAME</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="runDnsLookup()">🔎 استعلام DNS</button>
+      <div class="result-box" id="dnsResult"></div>
+    `,
+    portscan: `
+      <div class="form-group">
+        <label class="form-label">عنوان الهدف</label>
+        <input type="text" class="form-input mono" id="portHost" placeholder="example.com أو 8.8.8.8">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="runPortScan()">🔍 بدء الفحص</button>
+      <div class="result-box" id="portResult"></div>
+    `,
+    vuln: `
+      <div class="form-group">
+        <label class="form-label">الرابط أو النطاق</label>
+        <input type="text" class="form-input mono" id="vulnInput" placeholder="https://example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">عمق الفحص</label>
+        <select class="form-select" id="vulnDepth">
+          <option value="basic">أساسي</option>
+          <option value="medium">متوسط</option>
+          <option value="deep">عميق</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="runVulnScan()">💉 بدء الفحص</button>
+      <div class="result-box" id="vulnResult"></div>
+    `,
+    whois: `
+      <div class="form-group">
+        <label class="form-label">النطاق</label>
+        <input type="text" class="form-input mono" id="whoisInput" placeholder="example.com">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="runWhoisLookup()">🕵️ بحث Whois</button>
+      <div class="result-box" id="whoisResult"></div>
+    `,
+    hashcrack: `
+      <div class="form-group">
+        <label class="form-label">Hash المراد كسره</label>
+        <input type="text" class="form-input mono" id="hashInput" placeholder="5d41402abc4b2a76b9719d911017c592">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="runHashCrack()">🔓 محاولة الكسر</button>
+      <div class="result-box" id="hashcrackResult"></div>
+    `,
+    subdomain: `
+      <div class="form-group">
+        <label class="form-label">النطاق الأساسي</label>
+        <input type="text" class="form-input mono" id="subdomainInput" placeholder="example.com">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="runSubdomainScan()">📱 اكتشاف النطاقات الفرعية</button>
+      <div class="result-box" id="subdomainResult"></div>
+    `,
+    pwdstrength: `
+      <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <input type="text" class="form-input mono" id="pwdCheck" placeholder="اكتب كلمة المرور..." oninput="checkPasswordStrength()">
+      </div>
+      <div style="margin:15px 0">
+        <div style="height:12px;background:var(--border);border-radius:10px;overflow:hidden">
+          <div id="strengthBar" style="height:100%;width:0%;background:var(--red);transition:all 0.5s;border-radius:10px"></div>
+        </div>
+      </div>
+      <div class="result-box show" id="pwdResult" style="border-left-color:var(--blue)">
+        <div class="result-line dim">اكتب كلمة المرور للبدء...</div>
+      </div>
+    `,
+    hashgen: `
+      <div class="form-group">
+        <label class="form-label">النص</label>
+        <textarea class="form-textarea mono" id="hashGenInput" placeholder="اكتب النص هنا..." oninput="generateAllHashes()"></textarea>
+      </div>
+      <div id="hashGenResults"></div>
+    `,
+    phish: `
+      <div class="form-group">
+        <label class="form-label">الرسالة أو الرابط</label>
+        <textarea class="form-textarea" id="phishInput" placeholder="الصق الرسالة أو الرابط هنا..."></textarea>
+      </div>
+      <button class="btn btn-green btn-block" onclick="runPhishCheck()">🎣 فحص التصيد</button>
+      <div class="result-box" id="phishResult"></div>
+    `,
+    encrypt: `
+      <div class="form-group">
+        <label class="form-label">النص</label>
+        <textarea class="form-textarea" id="encInput" placeholder="اكتب النص..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">نوع التشفير</label>
+        <select class="form-select" id="encType">
+          <option value="base64">Base64</option>
+          <option value="hex">Hex</option>
+          <option value="rot13">ROT13</option>
+          <option value="url">URL Encode</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-green" onclick="doEncrypt()" style="flex:1">🔒 تشفير</button>
+        <button class="btn btn-secondary" onclick="doDecrypt()" style="flex:1">🔓 فك</button>
+      </div>
+      <div class="result-box" id="encResult"></div>
+    `,
+    pwdgen: `
+      <div class="form-group">
+        <label class="form-label">الطول: <span id="pwdLenVal" style="color:var(--blue)">16</span></label>
+        <input type="range" id="pwdLen" min="8" max="64" value="16" style="width:100%" oninput="document.getElementById('pwdLenVal').textContent=this.value">
+      </div>
+      <div class="form-group" style="display:flex;gap:15px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;color:var(--text);cursor:pointer"><input type="checkbox" id="pwdUpper" checked> A-Z</label>
+        <label style="display:flex;align-items:center;gap:6px;color:var(--text);cursor:pointer"><input type="checkbox" id="pwdLower" checked> a-z</label>
+        <label style="display:flex;align-items:center;gap:6px;color:var(--text);cursor:pointer"><input type="checkbox" id="pwdNum" checked> 0-9</label>
+        <label style="display:flex;align-items:center;gap:6px;color:var(--text);cursor:pointer"><input type="checkbox" id="pwdSym" checked> !@#$</label>
+      </div>
+      <button class="btn btn-green btn-block" onclick="generateStrongPassword()">🔑 توليد كلمة مرور</button>
+      <div class="result-box" id="pwdGenResult"></div>
+    `,
+    privacy: `
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input type="text" class="form-input mono" id="privacyInput" placeholder="example@email.com">
+      </div>
+      <button class="btn btn-green btn-block" onclick="runPrivacyCheck()">🕵️ فحص الخصوصية</button>
+      <div class="result-box" id="privacyResult"></div>
+    `,
+    audit: `
+      <button class="btn btn-green btn-block" onclick="runSecurityAudit()">📊 بدء الفحص</button>
+      <div class="result-box" id="auditResult"></div>
+    `,
+    loganalyzer: `
+      <div class="form-group">
+        <label class="form-label">الصق السجل للتحليل</label>
+        <textarea class="form-textarea mono" id="logInput" placeholder="[2025-01-01 10:00:00] LOGIN SUCCESS user=admin"></textarea>
+      </div>
+      <button class="btn btn-green btn-block" onclick="analyzeLogInput()">📝 تحليل السجل</button>
+      <div class="result-box" id="logResult"></div>
+    `
+  };
+  return UIs[id] || `<div class="empty-state"><div class="icon">🚧</div><h3>قيد التطوير</h3></div>`;
+}
+
+/* ===== التوست ===== */
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 2500);
+}
+
+/* ===== التشغيل ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  renderTools();
+  renderLogs();
+  console.log('👑 EDMAN SECURITY LAB Ready!');
+});
+</script>
+</body>
+</html>
